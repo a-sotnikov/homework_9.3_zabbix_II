@@ -1,0 +1,35 @@
+---
+- name: Install zabbix agents
+  hosts: all
+  remote_user: admin
+  become: true
+  tags:
+    - "Undone"
+
+  pre_tasks:
+    - name: Download repo installer
+      ansible.builtin.apt:
+        deb: "https://repo.zabbix.com/zabbix/6.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_6.0-4%2Bubuntu22.04_all.deb"
+        state: present
+
+  tasks:
+    - name: Install agents
+      ansible.builtin.apt:
+        package:
+          - zabbix-agent
+        update_cache: true
+
+    - name: Update config
+      ansible.builtin.lineinfile:
+        path: /etc/zabbix/zabbix_agentd.conf
+        regexp: '^\Server\=127\.0\.0\.1'
+        line: Server 127.0.0.1, "{{ hostvars['zabbix-server']['eth0']['ipv4']['address'] }}"
+        owner: 'zabbix'
+        group: 'zabbix'
+
+  handlers:
+    - name: Restart_agent
+      ansible.builtin.systemd:
+        service: 'zabbix-agent'
+        state: restarted
+        enabled: true
