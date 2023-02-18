@@ -22,10 +22,12 @@
     - name: Update config
       ansible.builtin.lineinfile:
         path: /etc/zabbix/zabbix_agentd.conf
-        regexp: '^\Server\=127\.0\.0\.1'
-        line: Server 127.0.0.1, "{{ hostvars['zabbix-server']['eth0']['ipv4']['address'] }}"
+        regexp: ^Server=127\.0\.0\.1.*
+        line: Server=127.0.0.1, {{ hostvars[groups['zabbix_server'][0]]['ansible_facts']['default_ipv4']['address'] }}
+        state: present
         owner: 'zabbix'
         group: 'zabbix'
+      notify: Restart_agent
 
   handlers:
     - name: Restart_agent
