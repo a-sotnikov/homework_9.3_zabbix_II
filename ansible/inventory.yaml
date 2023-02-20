@@ -2,7 +2,7 @@ all:
   children:
     zabbix_server:
       hosts:
-        158.160.29.163:
+        158.160.30.143:
     zabbix_agent:
       hosts:
-        158.160.20.83:
+        158.160.27.21:

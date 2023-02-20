@@ -4,7 +4,7 @@
   remote_user: admin
   become: true
   tags:
-    - "Undone"
+    - "Done"
 
   pre_tasks:
     - name: Download repo installer
@@ -35,3 +35,105 @@
         service: 'zabbix-agent'
         state: restarted
         enabled: true
+
+- name: Install server
+  hosts: zabbix_server
+  remote_user: admin
+  become: true
+  gather_facts: false
+  tags:
+    - "Undone"
+
+  tasks:
+
+    - name: Install server, web_GUI and DB
+      ansible.builtin.apt:
+        package:
+          - zabbix-server-pgsql
+          - zabbix-frontend-php
+          - php8.1-pgsql
+          - zabbix-nginx-conf
+          - zabbix-sql-scripts
+          - postgresql
+        state: present
+
+    - name: Install tools
+      ansible.builtin.apt:
+        package:
+          - libpq-dev
+          - python3-pip
+          - acl
+
+    - name: Install psycopg2
+      ansible.builtin.pip:
+        name: psycopg2-binary
+
+    - name: Create user for db
+      become_user: postgres
+      become: true
+      community.general.postgresql_user:
+        name: zabbix
+        password: "{{ DB_PASS }}"
+
+    - name: Create database
+      become_user: postgres
+      community.general.postgresql_db:
+        name: zabbix
+        owner: zabbix
+
+    - name: Check is schema script unpacked
+      ansible.builtin.stat:
+        path: "/usr/share/zabbix-sql-scripts/postgresql/server.sql"
+      register: unp_script
+
+    - name: Extract schema script
+      ansible.builtin.shell: "zcat /usr/share/zabbix-sql-scripts/postgresql/server.sql.gz > /usr/share/zabbix-sql-scripts/postgresql/server.sql"
+      when: not unp_script.stat.exists
+      register: unp_output
+      changed_when: unp_output.rc != 0
+
+    - name: Set permissions
+      ansible.builtin.file:
+        path: '/usr/share/zabbix-sql-scripts/postgresql/server.sql'
+        owner: postgres
+        group: postgres
+        mode: '744'
+
+    - name: Install schema
+      become_user: zabbix
+      tags:
+        - "Done"
+      community.postgresql.postgresql_script:
+        db: zabbix
+        path: /usr/share/zabbix-sql-scripts/postgresql/server.sql
+        login_user: zabbix
+        login_password: "{{ DB_PASS }}"
+
+    - name: Edit server.conf
+      ansible.builtin.lineinfile:
+        path: /etc/zabbix/zabbix_server.conf
+        regexp: ^DBPassword=.*
+        line: DBPassword={{ DB_PASS }}
+        state: present
+        owner: postgres
+        group: postgres
+
+    - name: Edit nginx conf
+      ansible.builtin.lineinfile:
+        path: /etc/zabbix/nginx.conf
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+      loop:
+        - { regexp: '.*listen.*', line: "\tlisten 8080;" }
+        - { regexp: '.*server_name.*', line: "\tserver_name _;" }
+
+    - name: Restart and enable
+      ansible.builtin.systemd:
+        service: "{{ item }}"
+        state: restarted
+        enabled: true
+      loop:
+        - zabbix-server
+        - nginx
+        - php8.1-fpm
