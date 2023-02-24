@@ -61,7 +61,20 @@
 >
 > *Приложите в Git код скрипта, а также скриншот Latest data с результатом работы скрипта на bash, чтобы был виден результат работы скрипта при отправке в него 1 и 2.*
 
-Ответ
+``` bash
+#! /bin/bash
+
+case "$1" in
+    1 ) echo "Sotnikov A. A.";;
+    2 ) date +%D;;
+    * ) echo "Nothing to show";;
+esac
+
+```
+
+![Template](img/6_Template.png)  
+
+![Latest data](img/6_Latest_data.png)
 
  ---
 
@@ -76,7 +89,30 @@
 >
 > *Приложите код скрипта в Git. Приложите в Git скриншот Latest data с результатом работы скрипта на Python, чтобы были видны результаты работы скрипта при отправке в него 1, 2, -ping, а также -simple_print.*
 
-Ответ
+``` python
+
+import sys
+import os
+import re
+from datetime import date
+
+if (sys.argv[1] == '-ping'): # Если -ping
+    result=os.popen("ping -c 1 " + sys.argv[2]).read() # Делаем пинг по заданному адресу
+    result=re.findall(r"time=(.*) ms", result) # Выдёргиваем из результата время
+    print(result[0]) # Выводим результат в консоль
+elif (sys.argv[1] == '-simple_print'): # Если simple_print
+    print(sys.argv[2]) # Выводим в консоль содержимое sys.arvg[2]
+elif (sys.argv[1] == '1'):
+    print("Sotnikov A.A")
+elif (sys.argv[1] == '2'):
+    print(date.today())
+else: # Во всех остальных случаях
+    print(f"unknown input: {sys.argv[1]}") #Выводим непонятый запрос в консоль
+```
+
+![Template](img/7_Template.png)
+
+![Latest data](img/7_latest_data.png)
 
  ---
 
@@ -86,7 +122,13 @@
 >
 > *Приложите в Git скриншот правила обнаружения. Приложите в Git скриншот страницы Discover, где видны оба хоста.*
 
-Ответ
+![Rule](img/8_Discovery_rule.png)
+
+![Action](img/8_Actions_Action.png)
+
+![Operation](img/8_Actions_Operations.png)
+
+![Status](img/8_Status.png)
 
  ---
 
@@ -96,4 +138,4 @@
 >
 > *Приложите в Git файлы Vagrantfile и zabbix-agent.sh.*
 
-Ответ
+[Сделано через ansible (первая play)](ansible/playbook.yaml)

@@ -29,6 +29,15 @@
         group: 'zabbix'
       notify: Restart_agent
 
+    - name: Upload UserParameters
+      ansible.builtin.copy:
+        src: ./zabbix/
+        dest: /etc/zabbix/
+        owner: zabbix
+        group: zabbix
+        mode: '744'
+      notify: Restart_agent
+
   handlers:
     - name: Restart_agent
       ansible.builtin.systemd:
